@@ -54,6 +54,9 @@ class Game {
   num growth_rate;
   num growth_remaining;
   
+  num direction_time;
+  String next_direction;
+  
   Game(this.canvas){
     this.canvas.onKeyDown.listen(key_listener);
     this.canvas.onMouseMove.listen(mouse_movement);
@@ -74,18 +77,23 @@ class Game {
     body = [head];
     growth_rate = 4;
     growth_remaining = 0;
+    direction_time = 0;
     switch(new Random().nextInt(4)) {
       case 0:
         direction = "North";
+        next_direction = "North";
         break;
       case 1:
         direction = "South";
+        next_direction = "South";
         break;
       case 2:
         direction = "East";
+        next_direction = "East";
         break;
       default:
         direction = "West";
+        next_direction = "West";
     }
     get_next_food();
     game_success = false;
@@ -211,10 +219,14 @@ class Game {
   
   void step() {
     //Move along the current direction from the head of the snake
+    if( direction_time > 0 ) {
+      direction_time--;
+    }
+    if( direction_time == 0 && next_direction != direction ) {
+      direction = next_direction;
+    }
     var next_position = new Cell.nextPosition(head, direction);
-    //print("Next: $next_position");
-    //print("Body: $body");
-    if( next_position.x > max_cells[0] || next_position.y > max_cells[1] ||
+    if( next_position.x > max_cells[0]-1 || next_position.y > max_cells[1]-1 ||
         next_position.x < 0 || next_position.y < 0) {
       game_over();
     }
@@ -241,7 +253,9 @@ class Game {
   }
   
   void game_over() {
+    print("You had ${body.length}/${(max_cells[0]*max_cells[1]/2).toInt()}");
     game_running = false;
+    game_success = body.length>(max_cells[0]*max_cells[1]/2);
     if( game_success ) {
       game_timer = new Timer(new Duration(milliseconds:speed), draw_success);
     }
@@ -251,7 +265,15 @@ class Game {
   }
   
   void change_direction(String direction) {
-    this.direction = direction;
+    //This puts the one line gap between turnabouts
+    if( 
+        ((this.direction == "North" || this.direction == "South") && 
+         (direction == "East" || direction == "West"))||
+        ((this.direction == "East" || this.direction == "West") && 
+         (direction == "North" || direction == "South"))) {
+      next_direction = direction;
+      direction_time = 2;
+    }
   }
   
   void draw_failure() {
