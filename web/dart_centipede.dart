@@ -29,29 +29,41 @@ void showFps(num fps) {
   query("#notes").text = "${fpsAverage.round().toInt()} fps";
 }
 
+void update_Mouse( num x, num y ) {
+  query("#mouse").text = "(${x.round().toInt()},${y.round().toInt()})";
+}
+
 class Game {
   CanvasElement canvas;
-  
   num renderTime;
   
-  num _width;
-  num _height;
+  num _width; num _height;
+  num mx; num my;
   
-  num speed;
-  num cell_size; //4 = 4px x 4px cells
   var max_cells;
+  var body;
+  var current_food;
+  var game_timer;
+  String direction;
+  bool game_running;
+  bool game_success;
+  Cell head;
+  num speed;
+  num cell_size;
   num fill;
   num growth_rate;
   num growth_remaining;
-  var body;
-  String direction;
-  bool game_running;
-  Cell head;
-  
-  var current_food;
   
   Game(this.canvas){
     this.canvas.onKeyDown.listen(key_listener);
+    this.canvas.onMouseMove.listen(mouse_movement);
+    this.canvas.onMouseDown.listen(mouse_press);
+    this.canvas.onMouseUp.listen(mouse_release);
+    
+    init_var();
+  }
+  
+  void init_var() {
     _width = canvas.width;
     _height = canvas.height;
     cell_size = 8;
@@ -76,7 +88,84 @@ class Game {
         direction = "West";
     }
     get_next_food();
+    game_success = false;
     game_running = true;
+  }
+  
+  void mouse_movement( e ) {
+    getMouse(e);
+    update_Mouse(mx, my);
+  }
+  
+  void mouse_press( e ) {
+    var context = this.canvas.context2D;
+    if( !game_running ) {
+      if( mx>_width/4+4 && mx<(_width/4+4+_width/2-8) &&
+          my>_height*5/12+8 && my<(_height*5/12+4+_height/4-16)) {
+        print("Button Pressed");
+        if( game_success ) {
+          context.clearRect(_width/4, _height/6, _width/2, _height/2);
+          context.fillRect(_width/4+4, _height*5/12+4, _width/2-8, _height/4-8);
+          context.clearRect(_width/4+10, _height*5/12+10, _width/2-20, _height/4-20);
+          context.font = '30pt Calibri';
+          context.textAlign = 'center';
+          context.fillText("Success", _width/2, _height/4, _width/2);
+          context.font = '20pt Calibri';
+          context.textAlign = 'center';
+          context.fillText("New Game", _width/2, _height/2+4, _width/2);
+        }
+        else {
+          context.clearRect(_width/4, _height/6, _width/2, _height/2);
+          context.fillRect(_width/4+4, _height*5/12+4, _width/2-8, _height/4-8);
+          context.clearRect(_width/4+10, _height*5/12+10, _width/2-20, _height/4-20);
+          context.font = '30pt Calibri';
+          context.textAlign = 'center';
+          context.fillText("Failure", _width/2, _height/4, _width/2);
+          context.font = '20pt Calibri';
+          context.textAlign = 'center';
+          context.fillText("Restart", _width/2, _height/2+4, _width/2);
+        }
+      }
+    }
+  }
+  
+  void mouse_release( e ) {
+    var context = this.canvas.context2D;
+    if( !game_running ) {
+      if( mx>_width/4+4 && mx<(_width/4+4+_width/2-8) &&
+          my>_height*5/12+8 && my<(_height*5/12+4+_height/4-16)) {
+        print("Button Released");
+        if( game_success ) {
+          context.clearRect(_width/4, _height/6, _width/2, _height/2);
+          context.fillRect(_width/4+4, _height*5/12+4, _width/2-8, _height/4-8);
+          context.clearRect(_width/4+8, _height*5/12+8, _width/2-16, _height/4-16);
+          context.font = '30pt Calibri';
+          context.textAlign = 'center';
+          context.fillText("Success", _width/2, _height/4, _width/2);
+          context.font = '20pt Calibri';
+          context.textAlign = 'center';
+          context.fillText("New Game", _width/2, _height/2, _width/2);
+        }
+        else{
+          context.clearRect(_width/4, _height/6, _width/2, _height/2);
+          context.fillRect(_width/4+4, _height*5/12+4, _width/2-8, _height/4-8);
+          context.clearRect(_width/4+8, _height*5/12+8, _width/2-16, _height/4-16);
+          context.font = '30pt Calibri';
+          context.textAlign = 'center';
+          context.fillText("Failure", _width/2, _height/4, _width/2);
+          context.font = '20pt Calibri';
+          context.textAlign = 'center';
+          context.fillText("Restart", _width/2, _height/2, _width/2);
+        }
+        init_var();
+        init();
+      }
+    }
+  }
+  
+  void getMouse(e) {
+    mx = _width + e.clientX - canvas.getBoundingClientRect().right;
+    my = _height + e.clientY - canvas.getBoundingClientRect().bottom;
   }
   
   void key_listener( e ) {
@@ -147,16 +236,48 @@ class Game {
     body.insert(0,next_position);
     head = body[0];
     if( game_running ) {
-     new Timer(new Duration(milliseconds:speed), step);
+      game_timer = new Timer(new Duration(milliseconds:speed), step);
     }
   }
   
   void game_over() {
     game_running = false;
+    if( game_success ) {
+      game_timer = new Timer(new Duration(milliseconds:speed), draw_success);
+    }
+    else {
+      game_timer = new Timer(new Duration(milliseconds:speed), draw_failure);
+    }
   }
   
   void change_direction(String direction) {
     this.direction = direction;
+  }
+  
+  void draw_failure() {
+    var context = this.canvas.context2D;
+    context.clearRect(_width/4, _height/6, _width/2, _height/2);
+    context.fillRect(_width/4+4, _height*5/12+4, _width/2-8, _height/4-8);
+    context.clearRect(_width/4+8, _height*5/12+8, _width/2-16, _height/4-16);
+    context.font = '30pt Calibri';
+    context.textAlign = 'center';
+    context.fillText("Failure", _width/2, _height/4, _width/2);
+    context.font = '20pt Calibri';
+    context.textAlign = 'center';
+    context.fillText("Restart", _width/2, _height/2, _width/2);
+  }
+  
+  void draw_success() {
+    var context = this.canvas.context2D;
+    context.clearRect(_width/4, _height/6, _width/2, _height/2);
+    context.fillRect(_width/4+4, _height*5/12+4, _width/2-8, _height/4-8);
+    context.clearRect(_width/4+8, _height*5/12+8, _width/2-16, _height/4-16);
+    context.font = '30pt Calibri';
+    context.textAlign = 'center';
+    context.fillText("Success", _width/2, _height/4, _width/2);
+    context.font = '20pt Calibri';
+    context.textAlign = 'center';
+    context.fillText("New Game", _width/2, _height/2, _width/2);
   }
   
   void draw(num _) {
@@ -266,200 +387,3 @@ class Food {
     context.restore();
   }
 }
-
-/*
-function init_var() {
-  c.onmousedown = myDown;
-  c.onmouseup = myUp;
-
-  dir_queue = false;
-
-  body = [[(c.width/2),(c.height/2)]];
-  get_next_food();
-}
-
-<script>
-var body; var grow; var direction; var c; var ctx; var tmp;
-var tmp2; var new_position; var tail; var game_running; var next_food;
-var mx, my; var show_menu; var active_menu;
-
-var main; var pause; var game_over;
-
-var dir_queue;
-
-function init() {
-  init_var();
-  addEventHandlers();
-  game_loop();
-  //load_menus();
-  start_game_timer();
-}
-
-function key_down(e) {
-  switch( e.keyCode ) {
-    case 37:
-      change_direction("West");
-      break;
-    case 38:
-      change_direction("South");
-      break;
-    case 39:
-      change_direction("East");
-      break;
-    case 40:
-      change_direction("North");
-      break;
-  }
-}
-
-function getMouse(e) {
-  var element = c;
-  var offsetX = 0, offsetY = 0;
-
-  if (element.offsetParent) {
-    do {
-      offsetX += element.offsetLeft;
-      offsetY += element.offsetTop;
-    } while ((element = element.offsetParent));
-  }
-
-  // Add padding and border style widths to offset
-  //offsetX += stylePaddingLeft;
-  //offsetY += stylePaddingTop;
-
-  //offsetX += styleBorderLeft;
-  //offsetY += styleBorderTop;
-
-  mx = e.pageX - offsetX;
-  my = e.pageY - offsetY
-}
-
-function step() {
-  // Move in the current direction
-  switch(direction) {
-    case "North":
-      new_position = [[body[0][0],body[0][1]+8]];
-      break;
-    case "South":
-      new_position = [[body[0][0],body[0][1]-8]];
-      break;
-    case "East":
-      new_position = [[body[0][0]+8,body[0][1]]];
-      break;
-    case "West":
-      new_position = [[body[0][0]-8,body[0][1]]];
-      break;
-  }
-  //console.log(new_position);
-  //console.log(body);
-  if(past_edge(new_position[0])) {
-    game_over();
-  };
-  if ( new_position[0][0] == next_food[0] &&
-     new_position[0][1] == next_food[1] ) {
-    grow+=100;
-    get_next_food();
-  };
-  if (grow<1) {
-    body.pop();
-  }
-  else {
-    grow--;
-  };
-  for (var i = body.length - 1; i >= 0; i--) {
-    if( new_position[0][0]==body[i][0] &&
-      new_position[0][1]==body[i][1] ) {
-      //TODO self-collision detection
-      console.log("collision");
-      game_over();
-    }
-  };
-  body = new_position.concat(body);
-  dir_queue = false;
-}
-
-function draw_success() {
-  ctx.clearRect(c.width/4,c.height/5,c.width/2,c.height/7);
-  //ctx.clearRect(0,0,c.width,c.height);
-  ctx.font = "30px arial";
-  ctx.fillText("Congradulations",c.width/4,c.height/5+27,c.width/2);
-  ctx.fillText("You Won",c.width/4+40,c.height/5+55,c.width/2);
-}
-
-function draw_failure() {
-  ctx.clearRect(c.width/4,c.height/5,c.width/2,c.height/7);
-  //ctx.clearRect(0,0,c.width,c.height);
-  ctx.font = "30px arial";
-  ctx.fillText("Game Over",c.width/4+20,c.height/5+40,c.width/2);
-}
-
-function change_direction(new_dir) {
-  if( !dir_queue ) {
-    if( (direction == "North" || direction == "South") &&
-      (new_dir == "East" || new_dir == "West") ) {
-      direction = new_dir;
-      dir_queue = true;
-    }
-    if( (direction == "East" || direction == "West") &&
-      (new_dir == "North" || new_dir == "South") ) {
-      direction = new_dir;
-      dir_queue = true;
-    }
-  };
-}
-
-function game_over() {
-  // Game over menu
-  game_running = false;
-  
-  if (has_won()) {
-    // Display success
-    window.setTimeout(draw_success, 100);
-  } 
-  else {
-    // Display failure
-    window.setTimeout(draw_failure, 100);
-  };
-}
-
-function has_won() {
-  // Check if the person won or lost
-  if (body.length < 2500) {return false;};
-  return true;
-}
-
-function game_loop() {
-  step();
-  draw();
-}
-
-function start_game_timer() {
-  function timer()
-    {
-      if(game_running)
-      {
-        game_loop();
-        window.setTimeout(timer, 100);
-      }
-    }
-  if(game_running){
-    window.setTimeout(timer, 15);
-  };
-}
-
-function addEventHandlers() {
-  window.addEventListener( "keypress", key_down, true);
-}
-
-</script>
-</head>
-<body>
-
-<div id="container" style="border:1px solid; width:402px; height:402px;">     
-  <canvas id="myCanvas" width="402" height="402">Oh dear, your browser dosen't support HTML5! Tell you what, why don't you upgrade to a decent browser - you won't regret it!
-  </canvas>  
-</div>
-
-</body>
-</html>
-*/
