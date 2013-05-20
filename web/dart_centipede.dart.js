@@ -3312,7 +3312,9 @@ $$.Game = {"": "Object;canvas,renderTime,_width,_height,mx,my,max_cells,body,cur
     this.my = $.$sub$n($.$add$ns(this._height, t1.get$clientY(e)), $.get$bottom$x(t2.getBoundingClientRect()));
   },
   key_listener$1: function(e) {
-    switch ($.get$keyCode$x(e)) {
+    var t1 = $.getInterceptor$x(e);
+    t1.preventDefault$0(e);
+    switch (t1.get$keyCode(e)) {
       case 37:
         this.change_direction$1("West");
         break;
@@ -3957,7 +3959,11 @@ $$.EmbedElement = {"": "Element;height=,width="};
 
 $$.ErrorEvent = {"": "Event;"};
 
-$$.Event = {"": "Interceptor;"};
+$$.Event = {"": "Interceptor;",
+  preventDefault$0: function(receiver) {
+    return receiver.preventDefault();
+  }
+};
 
 $$.EventException = {"": "Interceptor;",
   toString$0: function(receiver) {
@@ -6273,9 +6279,6 @@ $.get$id$x = function(receiver) {
 };
 $.get$iterator$ax = function(receiver) {
   return $.getInterceptor$ax(receiver).get$iterator(receiver);
-};
-$.get$keyCode$x = function(receiver) {
-  return $.getInterceptor$x(receiver).get$keyCode(receiver);
 };
 $.get$length$asx = function(receiver) {
   return $.getInterceptor$asx(receiver).get$length(receiver);

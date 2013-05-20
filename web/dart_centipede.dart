@@ -188,6 +188,7 @@ class Game {
   }
   
   void key_listener( e ) {
+    e.preventDefault();
     switch( e.keyCode ) {
       case 37:
         change_direction("West");
