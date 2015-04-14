@@ -5,6 +5,9 @@ No loading outside graphics or sounds.
 
 First project to learn dart and html5.
 
+## Demo
+http://calebmorris.github.io/centipede/dart_centipede.html
+
 ## Game Instructions
 Game of Centipede (AKA Snake)
 - Consume Food
@@ -17,3 +20,4 @@ Game of Centipede (AKA Snake)
 + Open folder in editor
 + Right click on `pubspec.yaml` and run `Pub Get`
 + Right click on `src/dart_centipede.dart` and run `Run as Javascript`
+
