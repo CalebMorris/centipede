@@ -22,7 +22,7 @@ Centipede
 */
 
 void main() {
-  CanvasElement canvas = query("#myCanvas");
+  CanvasElement canvas = querySelector("#myCanvas");
   canvas.focus();
   var centipede = new Game(canvas);
   centipede.init();
@@ -37,11 +37,11 @@ void showFps(num fps) {
 
   fpsAverage = fps * 0.05 + fpsAverage * 0.95;
 
-  query("#notes").text = "${fpsAverage.round().toInt()} fps";
+  querySelector("#notes").text = "${fpsAverage.round().toInt()} fps";
 }
 
 void update_Mouse( num x, num y ) {
-  query("#mouse").text = "(${x.round().toInt()},${y.round().toInt()})";
+  querySelector("#mouse").text = "(${x.round().toInt()},${y.round().toInt()})";
 }
 
 class Game {
